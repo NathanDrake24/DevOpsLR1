@@ -187,14 +187,6 @@ services:
       - POSTGRES_PASSWORD=testpass
 ```
 
-   5.5 Убедись что файлы в системе:
-```bash
-ls -l
-```
-   <img width="545" height="116" alt="image" src="https://github.com/user-attachments/assets/e2a07bcb-0a70-405b-b385-319c0ae895bc" />
-
-   
----
 
 ## 6. Cобери образ
 ***Убедись что ты в папке ~/myapp***
