@@ -82,3 +82,139 @@ sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin d
    sudo usermod -aG docker $USER
    ```
 ---
+
+## 5 Создаем приложение и Dockerfile
+   5.1 создаем папку проекта
+ ```bash
+ mkdir ~/myapp && cd ~/myapp
+ ```
+   <img width="311" height="83" alt="image" src="https://github.com/user-attachments/assets/2e2d25cb-d280-4330-bf75-86447fdf263f" />
+
+   5.2 Написание простого Python-приложения и добавление файла requirements.txt
+
+Создайте файл `app.py`:
+```bash
+cat > app.py << 'EOF'
+from flask import Flask
+import psycopg2
+import os
+
+app = Flask(__name__)
+
+def get_db_connection():
+    conn = psycopg2.connect(
+        host=os.getenv('POSTGRES_HOST', 'db'),
+        database=os.getenv('POSTGRES_DB', 'testdb'),
+        user=os.getenv('POSTGRES_USER', 'testuser'),
+        password=os.getenv('POSTGRES_PASSWORD', 'testpass')
+    )
+    return conn
+
+@app.route('/')
+def hello():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute('SELECT 1')
+        cur.close()
+        conn.close()
+        return "Привет Докер и postgres!"
+    except Exception as e:
+        return f"Извините, но подключения к базе не случилось :( Ошибка: {str(e)}"
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=1234)
+EOF
+```
+
+---
+## Создаем requirements.txt
+```bash
+nano requirements.txt
+```
+
+Записываем 
+
+```bash
+Flask
+psycopg2-binary
+```
+Жмем ctrl + O, enter, ctrl + x
+
+
+
+   5.3 Добавляем докер файл
+```bash
+cat > Dockerfile << 'EOF'
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY app.py .
+
+EXPOSE 1234
+
+CMD ["python", "app.py"]
+EOF
+```
+
+   5.4 Добавляем docker-compose.yml
+
+   ```bash
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "1234:1234"
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=testdb
+      - POSTGRES_USER=testuser
+      - POSTGRES_PASSWORD=testpass
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16
+    environment:
+      - POSTGRES_DB=testdb
+      - POSTGRES_USER=testuser
+      - POSTGRES_PASSWORD=testpass
+```
+
+   5.5 Убедись что файлы в системе:
+```bash
+ls -l
+```
+   <img width="545" height="116" alt="image" src="https://github.com/user-attachments/assets/e2a07bcb-0a70-405b-b385-319c0ae895bc" />
+
+   
+---
+
+## 6. Cобери образ
+***Убедись что ты в папке ~/myapp***
+   (Чтобы зайти cd ~/myapp) 
+```bash
+docker-compose up --build -d
+```
+---
+
+Так же все запустить можно из приложения Docker-Dekstop
+
+<img width="1253" height="708" alt="image" src="https://github.com/user-attachments/assets/fd6309e6-eeae-4d77-9a2c-8da3e5ce7939" />
+
+---
+
+7 Проверь в браузере Windows:
+       http://localhost:1234/
+       <img width="421" height="154" alt="image" src="https://github.com/user-attachments/assets/13d80dd6-63ad-4fb7-a2ff-4562de57d0c2" />
+
+
+---
+
+
