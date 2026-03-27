@@ -1,1 +1,1 @@
-# DevOpsLR1
+# Docker-стек: Python-приложение + PostgreSQL
